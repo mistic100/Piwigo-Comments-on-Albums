@@ -10,6 +10,11 @@ Author URI: http://www.strangeplanet.fr
 
 if (!defined('PHPWG_ROOT_PATH')) die('Hacking attempt!');
 
+if (mobile_theme())
+{
+  return;
+}
+
 global $prefixeTable;
 
 // +-----------------------------------------------------------------------+

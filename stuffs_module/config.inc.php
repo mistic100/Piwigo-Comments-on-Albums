@@ -12,9 +12,13 @@ if (isset($_POST['submit']))
   }
   else
   {
+    if (!isset($_POST['show_admin_buttons']))
+    {
+      $_POST['show_admin_buttons'] = 'off';
+    }
     $datas = array(
       $_POST['nb_comments'],
-      isset($_POST['show_admin_buttons']),
+      $_POST['show_admin_buttons'],
       $_POST['nb_cadres'],
       $_POST['width'],
       $_POST['height']
@@ -32,7 +36,7 @@ $template->assign(array(
   'WIDTH'       => $datas[3],
   'HEIGHT'      => $datas[4]
 ));
-if ($datas[1])
+if ($datas[1] == 'on')
 {
   $template->assign(array('SHOW_ADMIN_BUTTONS' => 'checked="checked"'));
 }

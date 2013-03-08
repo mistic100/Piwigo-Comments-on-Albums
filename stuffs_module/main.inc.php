@@ -1,75 +1,134 @@
 <?php
 
 if (!defined('PHPWG_ROOT_PATH')) die('Hacking attempt!');
+include_once(COA_PATH.'include/functions_comment.inc.php');
+
 global $user, $conf;
 
 // +-----------------------------------------------------------------------+
 // |                         comments management                           |
 // +-----------------------------------------------------------------------+
-// comments deletion
-if (isset($_GET['delete_album']) and is_numeric($_GET['delete_album']) and is_admin())
+
+$comment_id = null;
+$action = null;
+
+$actions = array('delete_comment_album', 'validate_comment_album', 'edit_comment_album');
+foreach ($actions as $loop_action)
 {
-    check_status(ACCESS_ADMINISTRATOR);
-    check_pwg_token();
-    $query = '
-DELETE FROM ' . COA_TABLE . '
-  WHERE id=' . $_GET['delete_album'] . '
-;';
-    pwg_query($query);
+  if (isset($_GET[$loop_action]))
+  {
+    $action = $loop_action;
+    check_input_parameter($action, $_GET, false, PATTERN_ID);
+    $comment_id = $_GET[$action];
+    break;
+  }
 }
 
-// comments validation
-if (isset($_GET['validate_album']) and is_numeric($_GET['validate_album']) and is_admin())
+if (isset($action))
 {
-    check_status(ACCESS_ADMINISTRATOR);
-    check_pwg_token();
-    $query = '
-UPDATE ' . COA_TABLE . '
-  SET validated = \'true\'
-  , validation_date = NOW()
-  WHERE id=' . $_GET['validate_album'] . '
-;';
-    pwg_query($query);
+  check_pwg_token();
+
+  $comment_author_id = get_comment_author_id_albums($comment_id);
+  $action = str_replace('_comment_album', '', $action);
+
+  if (can_manage_comment($action, $comment_author_id))
+  {
+    $perform_redirect = false;
+
+    if ('delete' == $action)
+    {
+      delete_user_comment_albums($comment_id);
+      $perform_redirect = true;
+    }
+
+    if ('validate' == $action)
+    {
+      validate_user_comment_albums($comment_id);
+      $perform_redirect = true;
+    }
+
+    if ('edit' == $action)
+    {
+      if (!empty($_POST['content']))
+      {
+        update_user_comment_albums(
+          array(
+            'comment_id' => $_GET['edit_comment_album'],
+            'category_id' => $_POST['image_id'],
+            'content' => $_POST['content']
+            ),
+          $_POST['key']
+          );
+
+        $perform_redirect = true;
+      }
+      else
+      {
+        $edit_comment = $_GET['edit_comment_album'];
+      }
+    }
+
+    if ($perform_redirect)
+    {
+      $redirect_url =
+        PHPWG_ROOT_PATH
+        .'index.php'
+        .get_query_string_diff(array('delete_comment_album','validate_comment_album','edit_comment_album','pwg_token'));
+
+      redirect(rtrim($redirect_url, '='));
+    }
+  }
 }
 
 // +-----------------------------------------------------------------------+
 // |                        last comments display                          |
 // +-----------------------------------------------------------------------+
+if ( !is_admin() )
+{
+  $page['where_clauses'][] = 'validated=\'true\'';
+}
+
+$page['where_clauses'][] = get_sql_condition_FandF
+  (
+    array
+      (
+        'forbidden_categories' => 'category_id',
+        'visible_categories' => 'category_id',
+      ),
+    '', true
+  );
+
 $comments = array();
 $element_ids = array();
 $category_ids = array();
-$max_width = 0;
-if (!is_admin())
-{
-  $clauses[] = 'validated="true"';
-}
-$clauses[] = get_sql_condition_FandF (
-    array ('forbidden_categories' => 'category_id',
-        'visible_categories' => 'category_id'), '', true);
 
 $query = '
-SELECT
-    com.id AS comment_id,
-    com.category_id,
-    com.author,
-    com.author_id,
-    '.$conf['user_fields']['username'].' AS username,
-    com.date,
-    com.content,
-    com.validated
+SELECT com.id AS comment_id,
+       com.category_id,
+       com.author,
+       com.author_id,
+       com.date,
+       com.content,
+       com.validated
   FROM '.COA_TABLE.' AS com
-    LEFT JOIN '.USERS_TABLE.' As u
-      ON u.'.$conf['user_fields']['id'].' = com.author_id
+    LEFT JOIN '.USERS_TABLE.' AS u
+    ON u.'.$conf['user_fields']['id'].' = com.author_id
   WHERE '.implode('
-    AND ', $clauses).'
-  GROUP BY
-    comment_id
+    AND ', $page['where_clauses']).'
+  GROUP BY comment_id,
+       com.category_id,
+       com.author,
+       com.author_id,
+       com.date,
+       com.content,
+       com.validated
   ORDER BY date DESC
-  LIMIT 0, ' . $datas[0] . '
-;';
+  LIMIT 0, ' . $datas[0] . ';';
 
+$query.= '
+;';
 $result = pwg_query($query);
-while ($row = mysql_fetch_assoc($result))
+while ($row = pwg_db_fetch_assoc($result))
 {
   array_push($comments, $row);
   array_push($element_ids, $row['category_id']);
@@ -77,9 +136,24 @@ while ($row = mysql_fetch_assoc($result))
 
 if (count($comments) > 0)
 {
+  $block['TEMPLATE'] = 'stuffs_lastcoms.tpl';
   $block['TITLE_URL'] = 'comments.php?display_mode=albums';
   $block['comments'] = array();
-
+  $block['MAX_WIDTH'] = $datas[3];
+  $block['MAX_HEIGHT'] = $datas[4];
+  switch ($datas[2])
+  {
+    case 1 :
+      $block['NB_COMMENTS_LINE'] = '99%';
+      break;
+    case 2 :
+      $block['NB_COMMENTS_LINE'] = '49%';
+      break;
+    case 3 :
+      $block['NB_COMMENTS_LINE'] = '32.4%';
+      break;
+  }
+  
   // retrieving category informations
   $query = '
 SELECT 
@@ -89,8 +163,7 @@ SELECT
     cat.uppercats, 
     com.id as comment_id,
     img.id AS image_id,
-    img.path,
-    img.tn_ext
+    img.path
   FROM '.CATEGORIES_TABLE.' AS cat
     LEFT JOIN '.COA_TABLE.' AS com
       ON com.category_id = cat.id
@@ -114,76 +187,92 @@ SELECT
     // category url
     $comment['cat_url'] = duplicate_index_url(
       array(
-        'category' => array(
-          'id' => $categories[$comment['comment_id']]['id'], 
-          'name' => $categories[$comment['comment_id']]['name'], 
-          'permalink' => $categories[$comment['comment_id']]['permalink'],
-          ),
+        'category' => $categories[$comment['comment_id']],
         array('start')
         )
       );
-     
-    // category thumbnail
-    $comment['thumb'] = get_thumbnail_url(
-      array(
-        'id' => $categories[$comment['comment_id']]['image_id'],
-        'path' => $categories[$comment['comment_id']]['path'],
-        'tn_ext' => @$categories[$comment['comment_id']]['tn_ext'],
-        )
-     );
+
+    // source of the thumbnail picture
+    $src_image = new SrcImage(array(
+      'id' => $categories[$comment['comment_id']]['image_id'],
+      'path' => $categories[$comment['comment_id']]['path'],
+      ));
 
     // author
-    $author = $comment['author'];
     if (empty($comment['author']))
     {
-      $author = l10n('guest');
+      $comment['author'] = l10n('guest');
     }
-    
-    // comment content
+
     $tpl_comment = array(
       'ID' => $comment['comment_id'],
       'U_PICTURE' => $comment['cat_url'],
+      'src_image' => $src_image,
       'ALT' => trigger_event('render_category_name', $categories[$comment['comment_id']]['name']),
-      'TN_SRC' => $comment['thumb'],
-      'AUTHOR' => trigger_event('render_comment_author', $author),
-      'DATE' => format_date($comment['date'], true),
-      'CONTENT' => trigger_event('render_comment_content', $comment['content'], 'album'),
+      'AUTHOR' => trigger_event('render_comment_author', $comment['author']),
+      'DATE'=>format_date($comment['date'], true),
+      'CONTENT'=>trigger_event('render_comment_content',$comment['content']),
       'WIDTH' => $datas[3],
       'HEIGHT' => $datas[4],
       );
-
-    switch ($datas[2])
+    
+    if ($datas[1] == 'on')
     {
-      case 1 :
-        $tpl_comment['CLASS'] = 'one_comment';
-        break;
-      case 2 :
-        $tpl_comment['CLASS'] = 'two_comment';
-        break;
-      case 3 :
-        $tpl_comment['CLASS'] = 'three_comment';
-        break;
-    }
+      $url =
+        get_root_url()
+        .'index.php'
+        .get_query_string_diff(array('edit_comment_album', 'delete_comment_album','validate_comment_album', 'pwg_token'));
 
-    // actions
-    if ( is_admin() and $datas[1])
-    {
-      $url = get_root_url().'index.php'.get_query_string_diff(array('delete_album','validate_album'));
-      $tpl_comment['U_DELETE'] = add_url_params($url, array(
-            'delete_album' => $comment['comment_id'],
-            'pwg_token' => get_pwg_token()));
-
-      if ($comment['validated'] != 'true')
+      if (can_manage_comment('delete', $comment['author_id']))
       {
-        $tpl_comment['U_VALIDATE'] = add_url_params($url, array(
-            'validate_album' => $comment['comment_id'],
-            'pwg_token' => get_pwg_token()));
+        $tpl_comment['U_DELETE'] = add_url_params(
+          $url,
+          array(
+            'delete_comment_album' => $comment['comment_id'],
+            'pwg_token' => get_pwg_token(),
+            )
+          );
+      }
+
+      if (can_manage_comment('edit', $comment['author_id']))
+      {
+        $tpl_comment['U_EDIT'] = add_url_params(
+          $url,
+          array(
+            'edit_comment_album' => $comment['comment_id'],
+            'pwg_token' => get_pwg_token(),
+            )
+          );
+
+        if (isset($edit_comment) and ($comment['comment_id'] == $edit_comment))
+        {
+          $tpl_comment['IN_EDIT'] = true;
+          $key = get_ephemeral_key(2, $comment['category_id']);
+          $tpl_comment['KEY'] = $key;
+          $tpl_comment['IMAGE_ID'] = $comment['category_id'];
+          $tpl_comment['CONTENT'] = $comment['content'];
+          $tpl_comment['PWG_TOKEN'] = get_pwg_token();
+        }
+      }
+
+      if (can_manage_comment('validate', $comment['author_id']))
+      {
+        if ('true' != $comment['validated'])
+        {
+          $tpl_comment['U_VALIDATE'] = add_url_params(
+            $url,
+            array(
+              'validate_comment_album'=> $comment['comment_id'],
+              'pwg_token' => get_pwg_token(),
+              )
+            );
+        }
       }
     }
     
     array_push($block['comments'], $tpl_comment);
   }
-  $block['TEMPLATE'] = dirname(__FILE__).'/stuffs_lastcoms.tpl';
+  $block['derivative_params'] = ImageStdParams::get_by_type(IMG_THUMB);
 }
 
 ?>
