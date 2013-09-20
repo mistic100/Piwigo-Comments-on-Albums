@@ -3,7 +3,7 @@
 Plugin Name: Comments on Albums
 Version: auto
 Description: Activate comments on albums pages
-Plugin URI: http://piwigo.org/ext/extension_view.php?eid=512
+Plugin URI: auto
 Author: Mistic
 Author URI: http://www.strangeplanet.fr
 */

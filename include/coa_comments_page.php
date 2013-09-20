@@ -41,6 +41,20 @@ function coa_add_button($content, &$smarty)
     'category_id' => l10n('album')
     );
   $template->assign('sort_by_options', $sort_by);
+  
+  // clean where_clauses from unknown column
+  foreach ($page['where_clauses'] as &$cond)
+  {
+    if (strpos($cond, 'ic.image_id') !== false)
+    {
+      $cond = get_sql_condition_FandF(array(
+        'forbidden_categories' => 'category_id',
+        'visible_categories' => 'category_id'
+        ),
+        '', true);
+    }
+  }
+  unset($cond);
 
   // +-----------------------------------------------------------------------+
   // |                         comments management                           |
