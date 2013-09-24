@@ -28,7 +28,7 @@ function coa_add_button($content, &$smarty)
 // +-----------------------------------------------------------------------+
 //                        comments on albums page                          |
 // +-----------------------------------------------------------------------+
- if ( isset($_GET['display_mode']) and $_GET['display_mode'] == 'albums' ) 
+if ( isset($_GET['display_mode']) and $_GET['display_mode'] == 'albums' ) 
 {
   include_once(COA_PATH.'include/functions_comment.inc.php'); // custom functions
   
@@ -341,8 +341,10 @@ SELECT
   $template->set_prefilter('comments', 'coa_change_comments_list');
   
   function coa_change_comments_list($content, &$smarty) {
-    $search = '<a href="{$comment.U_PICTURE}">';
-    $replacement = $search.'{$comment.ALT}<br/>';
+    $search[0] = '<a href="{$comment.U_PICTURE}">';
+    $replacement[0] = $search[0].'{$comment.ALT}<br/>';
+    $search[1] = '<input type="submit"';
+    $replacement[1] = '<input type=hidden name=display_mode value=albums>'.$search[1];
     return str_replace($search, $replacement, $content);
   }
 }
