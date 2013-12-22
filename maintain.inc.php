@@ -1,28 +1,69 @@
 <?php
-if (!defined('PHPWG_ROOT_PATH')) die('Hacking attempt!');
+defined('PHPWG_ROOT_PATH') or die('Hacking attempt!');
 
-defined('COA_ID') or define('COA_ID', basename(dirname(__FILE__)));
-include_once(PHPWG_PLUGINS_PATH . COA_ID . '/include/install.inc.php');
-
-function plugin_install() 
+class Comments_on_Albums_maintain extends PluginMaintain
 {
-  coa_install();
-  define('coa_installed', true);
-}
+  private $installed = false;
 
-function plugin_activate()
-{
-  if (!defined('coa_installed'))
+  function install($plugin_version, &$errors=array())
   {
-    coa_install();
+    global $prefixeTable;
+
+    pwg_query('
+CREATE TABLE IF NOT EXISTS `' . $prefixeTable . 'comments_categories` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `category_id` mediumint(8) unsigned NOT NULL DEFAULT 0,
+  `date` datetime NOT NULL DEFAULT "0000-00-00 00:00:00",
+  `author` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `author_id` smallint(5) DEFAULT NULL,
+  `anonymous_id` varchar(45) NOT NULL,
+  `website_url` varchar(255) DEFAULT NULL,
+  `content` longtext,
+  `validated` enum("true","false") NOT NULL DEFAULT "false",
+  `validation_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `comments_i2` (`validation_date`),
+  KEY `comments_i1` (`category_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8');
+
+    $result = pwg_query('SHOW COLUMNS FROM `' . $prefixeTable . 'comments_categories` LIKE "anonymous_id";');
+    if (!pwg_db_num_rows($result))
+    {
+      pwg_query('ALTER TABLE `' . $prefixeTable . 'comments_categories` ADD `anonymous_id` VARCHAR(45) DEFAULT NULL;');
+    }
+
+    $result = pwg_query('SHOW COLUMNS FROM `' . $prefixeTable . 'comments_categories` LIKE "email";');
+    if (!pwg_db_num_rows($result))
+    {
+      pwg_query('
+ALTER TABLE `' . $prefixeTable . 'comments_categories`
+  ADD `email` varchar(255) DEFAULT NULL,
+  ADD `website_url` varchar(255) DEFAULT NULL,
+  ADD KEY `comments_i2` (`validation_date`),
+  ADD KEY `comments_i1` (`category_id`)
+      ;');
+    }
+
+    $this->installed = true;
+  }
+
+  function activate($plugin_version, &$errors=array())
+  {
+    if (!$this->installed)
+    {
+      $this->install($plugin_version, $errors);
+    }
+  }
+
+  function deactivate()
+  {
+  }
+
+  function uninstall()
+  {
+    global $prefixeTable;
+
+    pwg_query('DROP TABLE `' . $prefixeTable . 'comments_categories`;');
   }
 }
-
-function plugin_uninstall() 
-{
-  global $prefixeTable;
-
-  pwg_query('DROP TABLE `' . $prefixeTable . 'comments_categories`;');
-}
-
-?>

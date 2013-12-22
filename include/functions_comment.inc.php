@@ -1,18 +1,18 @@
 <?php
 /* This is a copy of include/functions_comment.inc.php but adapted for Comments On Albums */
+defined('COA_ID') or die('Hacking attempt!');
 
 include_once(PHPWG_ROOT_PATH.'include/functions_comment.inc.php');
-add_event_handler('user_comment_check_albums', 'user_comment_check',
-  EVENT_HANDLER_PRIORITY_NEUTRAL, 2);
 
 /**
- * Tries to insert a user comment in the database and returns one of :
- * validate, moderate, reject
- * @param array comm contains author, content, category_id
- * @param string key secret key sent back to the browser
- * @param array infos out array of messages
+ * Tries to insert a user comment and returns action to perform.
+ *
+ * @param array &$comm
+ * @param string $key secret key sent back to the browser
+ * @param array &$infos output array of error messages
+ * @return string validate, moderate, reject
  */
-function insert_user_comment_albums( &$comm, $key, &$infos )
+function insert_user_comment_albums(&$comm, $key, &$infos)
 {
   global $conf, $user;
 
@@ -36,28 +36,29 @@ function insert_user_comment_albums( &$comm, $key, &$infos )
   // display author field if the user status is guest or generic
   if (!is_classic_user())
   {
-    if ( empty($comm['author']) )
+    if (empty($comm['author']))
     {
       if ($conf['comments_author_mandatory'])
       {
-        array_push($infos, l10n('Username is mandatory') );
+        $infos[] = l10n('Username is mandatory');
         $comment_action='reject';
       }
       $comm['author'] = 'guest';
     }
     $comm['author_id'] = $conf['guest_id'];
-    // if a guest try to use the name of an already existing user, he must be
-    // rejected
-    if ( $comm['author'] != 'guest' )
+    // if a guest try to use the name of an already existing user,
+    // he must be rejected
+    if ($comm['author'] != 'guest')
     {
       $query = '
 SELECT COUNT(*) AS user_exists
   FROM '.USERS_TABLE.'
-  WHERE '.$conf['user_fields']['username']." = '".addslashes($comm['author'])."'";
+  WHERE '.$conf['user_fields']['username']." = '".addslashes($comm['author'])."'
+;";
       $row = pwg_db_fetch_assoc( pwg_query( $query ) );
-      if ( $row['user_exists'] == 1 )
+      if ($row['user_exists'] == 1)
       {
-        array_push($infos, l10n('This login is already used by another user') );
+        $infos[] = l10n('This login is already used by another user');
         $comment_action='reject';
       }
     }
@@ -68,17 +69,19 @@ SELECT COUNT(*) AS user_exists
     $comm['author_id'] = $user['id'];
   }
 
-  if ( empty($comm['content']) )
-  { // empty comment content
+  // content
+  if (empty($comm['content']))
+  {
     $comment_action='reject';
   }
 
-  if ( !verify_ephemeral_key(@$key, $comm['category_id']) )
+  // key
+  if (!verify_ephemeral_key(@$key, $comm['category_id']))
   {
     $comment_action='reject';
     $_POST['cr'][] = 'key';
   }
-  
+
   // website
   if (!empty($comm['website_url']))
   {
@@ -88,11 +91,11 @@ SELECT COUNT(*) AS user_exists
     }
     if (!url_check_format($comm['website_url']))
     {
-      array_push($infos, l10n('Your website URL is invalid'));
+      $infos[] = l10n('Your website URL is invalid');
       $comment_action='reject';
     }
   }
-  
+
   // email
   if (empty($comm['email']))
   {
@@ -102,16 +105,16 @@ SELECT COUNT(*) AS user_exists
     }
     else if ($conf['comments_email_mandatory'])
     {
-      array_push($infos, l10n('Email address is missing. Please specify an email address.') );
+      $infos[] = l10n('Email address is missing. Please specify an email address.');
       $comment_action='reject';
     }
   }
   else if (!email_check_format($comm['email']))
   {
-    array_push($infos, l10n('mail address must be like xxx@yyy.eee (example : jack@altern.org)'));
+    $infos[] = l10n('mail address must be like xxx@yyy.eee (example : jack@altern.org)');
     $comment_action='reject';
   }
-  
+
   // anonymous id = ip address
   $ip_components = explode('.', $comm['ip']);
   if (count($ip_components) > 3)
@@ -137,19 +140,19 @@ SELECT count(1) FROM '.COA_TABLE.'
 ;';
 
     list($counter) = pwg_db_fetch_row(pwg_query($query));
-    if ( $counter > 0 )
+    if ($counter > 0)
     {
-      array_push( $infos, l10n('Anti-flood system : please wait for a moment before trying to post another comment') );
+      $infos[] = l10n('Anti-flood system : please wait for a moment before trying to post another comment');
       $comment_action='reject';
     }
   }
 
   // perform more spam check
-  $comment_action = trigger_event('user_comment_check_albums',
+  $comment_action = trigger_event('user_comment_check',
       $comment_action, $comm
     );
 
-  if ( $comment_action!='reject' )
+  if ($comment_action!='reject')
   {
     $query = '
 INSERT INTO '.COA_TABLE.'
@@ -167,9 +170,7 @@ INSERT INTO '.COA_TABLE.'
     '.(!empty($comm['email']) ? '\''.$comm['email'].'\'' : 'NULL').'
   )
 ';
-
     pwg_query($query);
-
     $comm['id'] = pwg_db_insert_id(COA_TABLE);
 
     if ( ($conf['email_admin_on_comment'] && 'validate' == $comment_action)
@@ -190,68 +191,72 @@ INSERT INTO '.COA_TABLE.'
 
       if ('moderate' == $comment_action)
       {
-        $keyargs_content[] = get_l10n_args('', '');
         $keyargs_content[] = get_l10n_args('(!) This comment requires validation', '');
       }
 
-      pwg_mail_notification_admins
-      (
+      pwg_mail_notification_admins(
         get_l10n_args('Comment by %s', stripslashes($comm['author']) ),
         $keyargs_content
       );
     }
   }
+
   return $comment_action;
 }
 
 /**
- * Tries to delete a user comment in the database
- * only admin can delete all comments
- * other users can delete their own comments
- * so to avoid a new sql request we add author in where clause
+ * Tries to delete a (or more) user comment.
+ *    only admin can delete all comments
+ *    other users can delete their own comments
  *
- * @param comment_id
+ * @param int|int[] $comment_id
+ * @return bool false if nothing deleted
  */
-function delete_user_comment_albums($comment_id) 
+function delete_user_comment_albums($comment_id)
 {
   $user_where_clause = '';
   if (!is_admin())
   {
     $user_where_clause = '   AND author_id = \''.$GLOBALS['user']['id'].'\'';
   }
-  
+
   if (is_array($comment_id))
+  {
     $where_clause = 'id IN('.implode(',', $comment_id).')';
+  }
   else
+  {
     $where_clause = 'id = '.$comment_id;
-  
+  }
+
   $query = '
 DELETE FROM '.COA_TABLE.'
   WHERE '.$where_clause.
 $user_where_clause.'
 ;';
-  $result = pwg_query($query);
-  
-  if ($result) 
+
+  if (pwg_db_changes(pwg_query($query)))
   {
-    email_admin('delete', 
+    email_admin('delete',
                 array('author' => $GLOBALS['user']['username'],
                       'comment_id' => $comment_id
                   ));
+    trigger_action('user_comment_deletion', $comment_id, 'category');
+
+    return true;
   }
-  
-  trigger_action('user_comment_deletion', $comment_id, 'category');
+
+  return false;
 }
 
 /**
- * Tries to update a user comment in the database
- * only admin can update all comments
- * users can edit their own comments if admin allow them
- * so to avoid a new sql request we add author in where clause
+ * Tries to update a user comment
+ *    only admin can update all comments
+ *    users can edit their own comments if admin allow them
  *
- * @param comment_id
- * @param post_key
- * @param content
+ * @param array $comment
+ * @param string $post_key secret key sent back to the browser
+ * @return string validate, moderate, reject
  */
 function update_user_comment_albums($comment, $post_key)
 {
@@ -259,7 +264,7 @@ function update_user_comment_albums($comment, $post_key)
 
   $comment_action = 'validate';
 
-  if ( !verify_ephemeral_key($post_key, $comment['category_id']) )
+  if (!verify_ephemeral_key($post_key, $comment['category_id']))
   {
     $comment_action='reject';
   }
@@ -274,12 +279,26 @@ function update_user_comment_albums($comment, $post_key)
 
   // perform more spam check
   $comment_action =
-    trigger_event('user_comment_check_albums',
+    trigger_event('user_comment_check',
       $comment_action,
       array_merge($comment,
             array('author' => $GLOBALS['user']['username'])
             )
       );
+
+  // website
+  if (!empty($comment['website_url']))
+  {
+    if (!preg_match('/^https?/i', $comment['website_url']))
+    {
+      $comment['website_url'] = 'http://'.$comment['website_url'];
+    }
+    if (!url_check_format($comment['website_url']))
+    {
+      $page['errors'][] = l10n('Your website URL is invalid');
+      $comment_action='reject';
+    }
+  }
 
   if ( $comment_action!='reject' )
   {
@@ -293,15 +312,16 @@ function update_user_comment_albums($comment, $post_key)
     $query = '
 UPDATE '.COA_TABLE.'
   SET content = \''.$comment['content'].'\',
+      website_url = '.(!empty($comment['website_url']) ? '\''.$comment['website_url'].'\'' : 'NULL').',
       validated = \''.($comment_action=='validate' ? 'true':'false').'\',
       validation_date = '.($comment_action=='validate' ? 'NOW()':'NULL').'
   WHERE id = '.$comment['comment_id'].
 $user_where_clause.'
 ;';
     $result = pwg_query($query);
-    
+
     // mail admin and ask to validate the comment
-    if ($result and $conf['email_admin_on_comment_validation'] and 'moderate' == $comment_action) 
+    if ($result and $conf['email_admin_on_comment_validation'] and 'moderate' == $comment_action)
     {
       include_once(PHPWG_ROOT_PATH.'include/functions_mail.inc.php');
 
@@ -313,12 +333,10 @@ $user_where_clause.'
         get_l10n_args('Comment: %s', stripslashes($comment['content']) ),
         get_l10n_args('', ''),
         get_l10n_args('Manage this user comment: %s', $comment_url),
-        get_l10n_args('', ''),
         get_l10n_args('(!) This comment requires validation', ''),
       );
 
-      pwg_mail_notification_admins
-      (
+      pwg_mail_notification_admins(
         get_l10n_args('Comment by %s', stripslashes($GLOBALS['user']['username']) ),
         $keyargs_content
       );
@@ -330,10 +348,17 @@ $user_where_clause.'
         'content' => stripslashes($comment['content'])) );
     }
   }
-  
+
   return $comment_action;
 }
 
+/**
+ * Returns the author id of a comment
+ *
+ * @param int $comment_id
+ * @param bool $die_on_error
+ * @return int
+ */
 function get_comment_author_id_albums($comment_id, $die_on_error=true)
 {
   $query = '
@@ -354,23 +379,28 @@ SELECT
       return false;
     }
   }
-  
+
   list($author_id) = pwg_db_fetch_row($result);
 
   return $author_id;
 }
 
 /**
- * Tries to validate a user comment in the database
- * @param int or array of int comment_id
+ * Tries to validate a user comment.
+ *
+ * @param int|int[] $comment_id
  */
 function validate_user_comment_albums($comment_id)
 {
   if (is_array($comment_id))
+  {
     $where_clause = 'id IN('.implode(',', $comment_id).')';
+  }
   else
+  {
     $where_clause = 'id = '.$comment_id;
-    
+  }
+
   $query = '
 UPDATE '.COA_TABLE.'
   SET validated = \'true\'
@@ -378,7 +408,6 @@ UPDATE '.COA_TABLE.'
   WHERE '.$where_clause.'
 ;';
   pwg_query($query);
-  
+
   trigger_action('user_comment_validation', $comment_id, 'category');
 }
-?>
