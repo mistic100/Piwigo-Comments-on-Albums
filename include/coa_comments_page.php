@@ -37,7 +37,7 @@ $url_self = PHPWG_ROOT_PATH.'comments.php'
   .get_query_string_diff(array('edit_albums','delete_albums','validate_albums','pwg_token'));
 
 // reset some template vars
-$template->clear_assign(array('F_ACTION', 'comments', 'navbar', 'sort_by_options'));
+$template->clear_assign(array('comments', 'navbar', 'sort_by_options'));
 
 // sort_by : database fields proposed for sorting comments list
 global $sort_by;
@@ -45,10 +45,7 @@ $sort_by = array(
   'date' => l10n('comment date'),
   'category_id' => l10n('Album')
   );
-$template->assign(array(
-  'F_ACTION' => PHPWG_ROOT_PATH.'comments.php?display_mode=albums',
-  'sort_by_options' => $sort_by,
-  ));
+$template->assign('sort_by_options', $sort_by);
 
 // clean where_clauses from unknown column
 foreach ($page['where_clauses'] as &$cond)
@@ -364,8 +361,11 @@ SELECT
 // add a line to display category name
 $template->set_prefilter('comments', 'coa_change_comments_list');
 
-function coa_change_comments_list($content, &$smarty) {
-  $search = '<a href="{$comment.U_PICTURE}">';
-  $replacement = $search.'{$comment.ALT}<br>';
+function coa_change_comments_list($content)
+{
+  $search[0] = '<a href="{$comment.U_PICTURE}">';
+  $replacement[0] = $search[0].'{$comment.ALT}<br>';
+  $search[1] = '<input type="submit"';
+  $replacement[1] = '<input type=hidden name=display_mode value=albums>'.$search[1];
   return str_replace($search, $replacement, $content);
 }
