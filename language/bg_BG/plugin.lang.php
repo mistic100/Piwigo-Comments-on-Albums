@@ -25,4 +25,7 @@ $lang['Display last posted comments on albums'] = 'Показване на по�
 $lang['Display comments on'] = 'Показване на коментарите';
 $lang['Comments on photos'] = 'Коментари за снимките';
 $lang['Comments on albums'] = 'Коментари за албумите';
+$lang['%d comments on albums'] = '%d коментари в албуми';
+$lang['Photos'] = 'Снимки';
+$lang['%d comment on album'] = '%d коментара в албум';
 ?>
