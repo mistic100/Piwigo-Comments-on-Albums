@@ -155,8 +155,9 @@ if ($category['commentable'] and isset($_POST['content']))
   }
 
   // allow plugins to notify what's going on
-  trigger_action( 'user_comment_insertion',
-      array_merge($comm, array('action'=>$comment_action) )
+  trigger_notify('user_comment_insertion',
+      array_merge($comm, array('action'=>$comment_action) ),
+      'album'
     );
 
   $template->assign('DISPLAY_COMMENTS_BLOCK', true);
@@ -281,9 +282,9 @@ SELECT
       // comment content
       $tpl_comment = array(
         'ID' => $row['id'],
-        'AUTHOR' => trigger_event('render_comment_author', $row['author']),
+        'AUTHOR' => trigger_change('render_comment_author', $row['author']),
         'DATE' => format_date($row['date'], true),
-        'CONTENT' => trigger_event('render_comment_content', $row['content'], 'album'),
+        'CONTENT' => trigger_change('render_comment_content', $row['content'], 'album'),
         'WEBSITE_URL' => $row['website_url'],
         );
 
