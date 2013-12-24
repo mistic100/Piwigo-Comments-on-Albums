@@ -8,7 +8,7 @@ if (isset($_POST['submit']))
 {
   if (empty($_POST['nb_comments']))
   {
-    array_push($page['errors'], l10n('lastcoms_no_nb_comments'));
+    $page['errors'][] = l10n('lastcoms_no_nb_comments');
   }
   else
   {

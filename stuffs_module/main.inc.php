@@ -130,8 +130,8 @@ $query.= '
 $result = pwg_query($query);
 while ($row = pwg_db_fetch_assoc($result))
 {
-  array_push($comments, $row);
-  array_push($element_ids, $row['category_id']);
+  $comments[] = $row;
+  $element_ids[] = $row['category_id'];
 }
 
 if (count($comments) > 0)
@@ -153,21 +153,21 @@ if (count($comments) > 0)
       $block['NB_COMMENTS_LINE'] = '32.4%';
       break;
   }
-  
+
   // retrieving category informations
   $query = '
-SELECT 
-    cat.id, 
-    cat.name, 
-    cat.permalink, 
-    cat.uppercats, 
+SELECT
+    cat.id,
+    cat.name,
+    cat.permalink,
+    cat.uppercats,
     com.id as comment_id,
     img.id AS image_id,
     img.path
   FROM '.CATEGORIES_TABLE.' AS cat
     LEFT JOIN '.COA_TABLE.' AS com
       ON com.category_id = cat.id
-    LEFT JOIN '.USER_CACHE_CATEGORIES_TABLE.' AS ucc 
+    LEFT JOIN '.USER_CACHE_CATEGORIES_TABLE.' AS ucc
       ON ucc.cat_id = cat.id AND ucc.user_id = '.$user['id'].'
     LEFT JOIN '.IMAGES_TABLE.' AS img
       ON img.id = ucc.user_representative_picture_id
@@ -175,7 +175,7 @@ SELECT
     array(
       'forbidden_categories' => 'cat.id',
       'visible_categories' => 'cat.id'
-      ), 
+      ),
     'WHERE'
     ).'
     AND cat.id IN ('.implode(',', $element_ids).')
@@ -215,7 +215,7 @@ SELECT
       'WIDTH' => $datas[3],
       'HEIGHT' => $datas[4],
       );
-    
+
     if ($datas[1] == 'on')
     {
       $url =
@@ -269,8 +269,8 @@ SELECT
         }
       }
     }
-    
-    array_push($block['comments'], $tpl_comment);
+
+    $block['comments'][] = $tpl_comment;
   }
   $block['derivative_params'] = ImageStdParams::get_by_type(IMG_THUMB);
 }

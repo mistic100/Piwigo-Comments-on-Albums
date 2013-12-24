@@ -386,6 +386,8 @@ SELECT
 
   $template->set_filename('comments_on_albums', realpath(COA_PATH . 'template/albums.tpl'));
 
+  trigger_notify('loc_end_coa');
+
   if (isset($pwg_loaded_plugins['rv_tscroller']) and count($page['navigation_bar']) != 0)
   {
     $template->assign('COMMENTS_ON_TOP', true);
