@@ -25,4 +25,7 @@ $lang['Comments on photos'] = '相片上的評論';
 $lang['Display comments on'] = '顯示評論在於';
 $lang['Display last posted comments on albums'] = '顯示最後相簿發表評論';
 $lang['Last comments on albums'] = '相簿上的最新留言';
+$lang['%d comment on album'] = '%d 評論在相冊上';
+$lang['%d comments on albums'] = '%d 評論在各相冊上';
+$lang['Photos'] = '相片';
 ?>
