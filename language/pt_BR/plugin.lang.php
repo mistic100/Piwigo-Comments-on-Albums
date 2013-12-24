@@ -25,4 +25,7 @@ $lang['Comments on photos'] = 'Comentários sobre fotos';
 $lang['Display comments on'] = 'Exibir comentários sobre';
 $lang['Display last posted comments on albums'] = 'Mostrar últimos comentários postados em álbuns';
 $lang['Last comments on albums'] = 'Últimos Comentários em álbuns';
+$lang['%d comment on album'] = '%d comentário no álbum';
+$lang['%d comments on albums'] = '%d comentários no álbum';
+$lang['Photos'] = 'Fotos';
 ?>
