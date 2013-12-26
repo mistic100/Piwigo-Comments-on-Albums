@@ -25,4 +25,7 @@ $lang['Comments on photos'] = 'Kommentarer til fotografier';
 $lang['Display comments on'] = 'Vis kommentarer til';
 $lang['Display last posted comments on albums'] = 'Vis seneste tilføjede kommentarer til albummer';
 $lang['Last comments on albums'] = 'Seneste kommentarer til albummer';
+$lang['%d comment on album'] = '%d kommentar til album';
+$lang['%d comments on albums'] = '%d kommentarer til album';
+$lang['Photos'] = 'Fotografier';
 ?>
