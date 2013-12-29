@@ -25,4 +25,7 @@ $lang['Comments on photos'] = 'Kuvien kommentit';
 $lang['Display comments on'] = 'Näytä kommentit kohteille';
 $lang['Display last posted comments on albums'] = 'Näytä viimeisimmät kommentit albumeihin';
 $lang['Last comments on albums'] = 'Viimeisimmät kommentit albumeihin';
+$lang['%d comment on album'] = 'Albumin %d kommentti';
+$lang['%d comments on albums'] = '%d kommenttia albumeille';
+$lang['Photos'] = 'Valokuvat';
 ?>
