@@ -25,4 +25,7 @@ $lang['Comments on photos'] = 'Piltide kommentaarid';
 $lang['Display comments on'] = 'Näita kommentaare';
 $lang['Display last posted comments on albums'] = 'Näita albumite viimaseid kommentaare';
 $lang['Last comments on albums'] = 'Viimased albumite kommentaarid';
+$lang['%d comment on album'] = '%d kommentaari albumil';
+$lang['%d comments on albums'] = '%d kommentaare albumitel';
+$lang['Photos'] = 'Pildid';
 ?>
