@@ -25,4 +25,7 @@ $lang['Comments on photos'] = 'دیدگاه برای عکس‌ها';
 $lang['Display comments on'] = 'نمایش دیدگاه‌های روی';
 $lang['Display last posted comments on albums'] = 'نمایش آخرین دیدگاهِ فرستاده شده در آلبوم‌ها';
 $lang['Last comments on albums'] = 'آخرین دیدگاه‌های آلبوم';
+$lang['%d comment on album'] = '%d دیدگاه روی آلبوم';
+$lang['%d comments on albums'] = '%d دیدگاه روی آلبوم‌ها';
+$lang['Photos'] = 'عکس‌ها';
 ?>
