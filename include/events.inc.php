@@ -9,7 +9,7 @@ function coa_albums()
       isset($page['category']) and $page['body_id'] == 'theCategoryPage'
     )
   {
-    trigger_notify('loc_begin_coa');
+    trigger_action('loc_begin_coa');
     include(COA_PATH . 'include/coa_albums.php');
   }
 }

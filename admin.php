@@ -181,11 +181,11 @@ while ($row = pwg_db_fetch_assoc($result))
     array(
       'ID' => $row['id'],
       'U_PICTURE' => get_root_url().'admin.php?page=album-'.$row['category_id'],
-      'CATEGORY_NAME' => trigger_change('render_category_name', $row['name']),
+      'CATEGORY_NAME' => trigger_event('render_category_name', $row['name']),
       'TN_SRC' => $thumb,
-      'AUTHOR' => trigger_change('render_comment_author', $author_name),
+      'AUTHOR' => trigger_event('render_comment_author', $author_name),
       'DATE' => format_date($row['date'], true),
-      'CONTENT' => trigger_change('render_comment_content', $row['content'], 'album'),
+      'CONTENT' => trigger_event('render_comment_content', $row['content'], 'album'),
       'IS_PENDING' => ('false' == $row['validated']),
       )
     );

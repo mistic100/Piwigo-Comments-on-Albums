@@ -155,7 +155,7 @@ if ($category['commentable'] and isset($_POST['content']))
   }
 
   // allow plugins to notify what's going on
-  trigger_notify('user_comment_insertion',
+  trigger_action('user_comment_insertion',
       array_merge($comm, array('action'=>$comment_action) ),
       'album'
     );
@@ -283,8 +283,8 @@ SELECT
       $tpl_comment = array(
         'ID' => $row['id'],
         'AUTHOR' => trigger_change('render_comment_author', $row['author']),
-        'DATE' => format_date($row['date'], true),
-        'CONTENT' => trigger_change('render_comment_content', $row['content'], 'album'),
+        'DATE' => trigger_event($row['date'], true),
+        'CONTENT' => trigger_event('render_comment_content', $row['content'], 'album'),
         'WEBSITE_URL' => $row['website_url'],
         );
 
@@ -386,7 +386,7 @@ SELECT
 
   $template->set_filename('comments_on_albums', realpath(COA_PATH . 'template/albums.tpl'));
 
-  trigger_notify('loc_end_coa');
+  trigger_action('loc_end_coa');
 
   if (isset($pwg_loaded_plugins['rv_tscroller']) and count($page['navigation_bar']) != 0)
   {
