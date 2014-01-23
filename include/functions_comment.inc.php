@@ -85,6 +85,7 @@ SELECT COUNT(*) AS user_exists
   // website
   if (!empty($comm['website_url']))
   {
+    $comm['website_url'] = strip_tags($comm['website_url']);
     if (!preg_match('/^https?/i', $comm['website_url']))
     {
       $comm['website_url'] = 'http://'.$comm['website_url'];
@@ -290,6 +291,7 @@ function update_user_comment_albums($comment, $post_key)
   // website
   if (!empty($comment['website_url']))
   {
+    $comm['website_url'] = strip_tags($comm['website_url']);
     if (!preg_match('/^https?/i', $comment['website_url']))
     {
       $comment['website_url'] = 'http://'.$comment['website_url'];
