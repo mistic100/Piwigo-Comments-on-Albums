@@ -294,11 +294,11 @@ SELECT
       'ID' => $comment['comment_id'],
       'U_PICTURE' => $comment['cat_url'],
       'src_image' => $comment['src_image'],
-      'ALT' => trigger_event('render_category_name', $categories[$comment['comment_id']]['name']),
-      'AUTHOR' => trigger_event('render_comment_author', $comment['author']),
+      'ALT' => trigger_change('render_category_name', $categories[$comment['comment_id']]['name']),
+      'AUTHOR' => trigger_change('render_comment_author', $comment['author']),
       'WEBSITE_URL' => $comment['website_url'],
       'DATE' => format_date($comment['date'], true),
-      'CONTENT' => trigger_event('render_comment_content', $comment['content'], 'album'),
+      'CONTENT' => trigger_change('render_comment_content', $comment['content'], 'album'),
       );
 
     if (is_admin())
