@@ -17,23 +17,18 @@ if (mobile_theme())
 
 global $prefixeTable;
 
-
-define('COA_ID',      basename(dirname(__FILE__)));
-define('COA_PATH' ,   PHPWG_PLUGINS_PATH . COA_ID . '/');
-define('COA_TABLE' ,  $prefixeTable . 'comments_categories');
-define('COA_ADMIN',   get_root_url().'admin.php?page=plugin-' . COA_ID);
-define('COA_VERSION', 'auto');
+define('COA_ID',     basename(dirname(__FILE__)));
+define('COA_PATH' ,  PHPWG_PLUGINS_PATH . COA_ID . '/');
+define('COA_TABLE' , $prefixeTable . 'comments_categories');
+define('COA_ADMIN',  get_root_url().'admin.php?page=plugin-' . COA_ID);
 
 
 add_event_handler('init', 'coa_init');
 
+
 function coa_init()
 {
-  global $user, $conf, $pwg_loaded_plugins;
-
-  include_once(COA_PATH . 'maintain.inc.php');
-  $maintain = new Comments_on_Albums_maintain(COA_ID);
-  $maintain->autoUpdate(COA_VERSION, 'install');
+  global $user, $conf;
 
   // luciano doesn't use comments
   // incompatible with dynamic display of Stripped & Collumns
