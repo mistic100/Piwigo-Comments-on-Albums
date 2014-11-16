@@ -1,6 +1,6 @@
 <?php
 /* Code adapted from include/picture_comment.inc.php and picture.php */
-defined('COA_ID') or die('Hacking attempt!');
+defined('COA_PATH') or die('Hacking attempt!');
 
 global $template, $page, $conf, $pwg_loaded_plugins, $user;
 

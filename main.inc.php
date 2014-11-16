@@ -10,6 +10,17 @@ Author URI: http://www.strangeplanet.fr
 
 defined('PHPWG_ROOT_PATH') or die('Hacking attempt!');
 
+if (basename(dirname(__FILE__)) != 'Comments_on_Albums')
+{
+  add_event_handler('init', 'coa_error');
+  function coa_error()
+  {
+    global $page;
+    $page['errors'][] = 'Comments on Albums folder name is incorrect, uninstall the plugin and rename it to "Comments_on_Albums"';
+  }
+  return;
+}
+
 if (mobile_theme())
 {
   return;
@@ -17,10 +28,9 @@ if (mobile_theme())
 
 global $prefixeTable;
 
-define('COA_ID',     basename(dirname(__FILE__)));
-define('COA_PATH' ,  PHPWG_PLUGINS_PATH . COA_ID . '/');
+define('COA_PATH' ,  PHPWG_PLUGINS_PATH . 'Comments_on_Albums/');
 define('COA_TABLE' , $prefixeTable . 'comments_categories');
-define('COA_ADMIN',  get_root_url().'admin.php?page=plugin-' . COA_ID);
+define('COA_ADMIN',  get_root_url().'admin.php?page=plugin-Comments_on_Albums');
 
 
 add_event_handler('init', 'coa_init');

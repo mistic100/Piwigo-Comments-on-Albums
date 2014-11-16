@@ -1,6 +1,6 @@
 <?php
 /* This is a copy of include/functions_comment.inc.php but adapted for Comments On Albums */
-defined('COA_ID') or die('Hacking attempt!');
+defined('COA_PATH') or die('Hacking attempt!');
 
 include_once(PHPWG_ROOT_PATH.'include/functions_comment.inc.php');
 

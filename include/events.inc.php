@@ -1,5 +1,5 @@
 <?php
-defined('COA_ID') or die('Hacking attempt!');
+defined('COA_PATH') or die('Hacking attempt!');
 
 function coa_albums()
 {

@@ -1,6 +1,6 @@
 <?php
 /* Code adapted from admin/comments.php */
-defined('COA_ID') or die('Hacking attempt!');
+defined('COA_PATH') or die('Hacking attempt!');
 
 $page['active_menu'] = get_active_menu('comments');
 
