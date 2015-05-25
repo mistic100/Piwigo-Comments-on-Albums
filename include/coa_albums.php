@@ -283,7 +283,7 @@ SELECT
       $tpl_comment = array(
         'ID' => $row['id'],
         'AUTHOR' => trigger_change('render_comment_author', $row['author']),
-        'DATE' => trigger_change($row['date'], true),
+        'DATE' => format_date($row['date'], array('day_name','day','month','year','time')),
         'CONTENT' => trigger_change('render_comment_content', $row['content'], 'album'),
         'WEBSITE_URL' => $row['website_url'],
         );
