@@ -83,12 +83,14 @@ if (isset($action))
 // +-----------------------------------------------------------------------+
 // |                        last comments display                          |
 // +-----------------------------------------------------------------------+
+
+$where_clauses = array();
 if ( !is_admin() )
 {
-  $page['where_clauses'][] = 'validated=\'true\'';
+  $where_clauses[] = 'validated=\'true\'';
 }
 
-$page['where_clauses'][] = get_sql_condition_FandF
+$where_clauses[] = get_sql_condition_FandF
   (
     array
       (
@@ -114,7 +116,7 @@ SELECT com.id AS comment_id,
     LEFT JOIN '.USERS_TABLE.' AS u
     ON u.'.$conf['user_fields']['id'].' = com.author_id
   WHERE '.implode('
-    AND ', $page['where_clauses']).'
+    AND ', $where_clauses).'
   GROUP BY comment_id,
        com.category_id,
        com.author,
