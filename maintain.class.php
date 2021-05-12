@@ -19,7 +19,7 @@ class Comments_on_Albums_maintain extends PluginMaintain
 CREATE TABLE IF NOT EXISTS `' . $this->table . '` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `category_id` mediumint(8) unsigned NOT NULL DEFAULT 0,
-  `date` datetime NOT NULL DEFAULT now(),
+  `date` datetime NOT NULL DEFAULT "1970-01-01 00:00:00",
   `author` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `author_id` smallint(5) DEFAULT NULL,
